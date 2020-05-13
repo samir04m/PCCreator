@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { TokenStorageService } from './_services/token-storage.service';
 import { ApiService } from './services/api.service';
 
 @Component({
@@ -7,17 +8,30 @@ import { ApiService } from './services/api.service';
   styleUrls: ['./app.component.css'],
   providers: [ApiService]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'pccreator';
-  
-  pcs = [{
-    name : 'prueba'
-  }];
 
-  constructor(private api:ApiService) {
+  isLoggedIn = false;
+  showAdminBoard = false;
+  showModeratorBoard = false;
+  username: string;
+
+  pcs:any[];
+  
+
+  constructor(private api: ApiService, private tokenStorageService: TokenStorageService) {
     this.getPcs();
   }
 
+  ngOnInit() {
+    this.isLoggedIn = !!this.tokenStorageService.getToken();
+
+    if (this.isLoggedIn) {
+      const username = this.tokenStorageService.getUserId();
+      this.username = username;
+    }
+  }
+  
   getPcs = () => {
     this.api.getPcs().subscribe(
       data => {
@@ -26,6 +40,11 @@ export class AppComponent {
         console.error(error);
       }
     )
+  }
+
+  logout() {
+    this.tokenStorageService.signOut();
+    window.location.reload();
   }
 
 }
