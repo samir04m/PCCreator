@@ -1,21 +1,27 @@
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.parsers import JSONParser
+from django.http import Http404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from .serializers import PcSerializer
-from .models import *
+from .models import Pc
 
-@csrf_exempt
-def pc_list(request):
-    
-    if request.method == 'GET':
+class PcList(APIView):
+    def get(self, request, format=None):
         pcs = Pc.objects.all()
         serializer = PcSerializer(pcs, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        serializer = PcSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)
+
+class PcDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Pc.objects.get(pk=pk)
+        except Pc.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        pc = self.get_object(pk)
+        serializer = PcSerializer(pc)
+        return Response(serializer.data)
+
+
